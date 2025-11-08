@@ -48,7 +48,7 @@ try {
     $_SESSION['user_id'] = $user['user_id'];
     $_SESSION['username'] = $user['username'];
     $_SESSION['email'] = $user['email'];
-    $_SESSION['role'] = $user['role'];
+    $_SESSION['role'] = ROLE_USER; // Single role for all users
     $_SESSION['last_activity'] = time();
     
     // Update last login

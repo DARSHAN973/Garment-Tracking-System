@@ -1,0 +1,235 @@
+/* Global Button Border Styles for Garment Production System */
+
+/* Primary Action Buttons */
+button, 
+.btn, 
+input[type="submit"], 
+input[type="button"], 
+a[class*="bg-"], 
+.button {
+    border: 2px solid transparent !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Blue Buttons */
+.bg-blue-500, .bg-blue-600, .bg-blue-700 {
+    border-color: #1e40af !important;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15) !important;
+}
+
+.bg-blue-500:hover, .bg-blue-600:hover, .bg-blue-700:hover {
+    border-color: #1e3a8a !important;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.25) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Green Buttons */
+.bg-green-500, .bg-green-600, .bg-green-700 {
+    border-color: #16a34a !important;
+    box-shadow: 0 2px 4px rgba(34, 197, 94, 0.15) !important;
+}
+
+.bg-green-500:hover, .bg-green-600:hover, .bg-green-700:hover {
+    border-color: #15803d !important;
+    box-shadow: 0 4px 8px rgba(34, 197, 94, 0.25) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Red/Danger Buttons */
+.bg-red-500, .bg-red-600, .bg-red-700 {
+    border-color: #dc2626 !important;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.15) !important;
+}
+
+.bg-red-500:hover, .bg-red-600:hover, .bg-red-700:hover {
+    border-color: #b91c1c !important;
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.25) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Purple Buttons */
+.bg-purple-500, .bg-purple-600, .bg-purple-700 {
+    border-color: #9333ea !important;
+    box-shadow: 0 2px 4px rgba(168, 85, 247, 0.15) !important;
+}
+
+.bg-purple-500:hover, .bg-purple-600:hover, .bg-purple-700:hover {
+    border-color: #7c3aed !important;
+    box-shadow: 0 4px 8px rgba(168, 85, 247, 0.25) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Indigo Buttons */
+.bg-indigo-500, .bg-indigo-600, .bg-indigo-700 {
+    border-color: #4f46e5 !important;
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.15) !important;
+}
+
+.bg-indigo-500:hover, .bg-indigo-600:hover, .bg-indigo-700:hover {
+    border-color: #4338ca !important;
+    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.25) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Yellow Buttons */
+.bg-yellow-500, .bg-yellow-600, .bg-yellow-700 {
+    border-color: #d97706 !important;
+    box-shadow: 0 2px 4px rgba(251, 191, 36, 0.15) !important;
+}
+
+.bg-yellow-500:hover, .bg-yellow-600:hover, .bg-yellow-700:hover {
+    border-color: #b45309 !important;
+    box-shadow: 0 4px 8px rgba(251, 191, 36, 0.25) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Gray Buttons */
+.bg-gray-500, .bg-gray-600, .bg-gray-700 {
+    border-color: #6b7280 !important;
+    box-shadow: 0 2px 4px rgba(107, 114, 128, 0.15) !important;
+}
+
+.bg-gray-500:hover, .bg-gray-600:hover, .bg-gray-700:hover {
+    border-color: #4b5563 !important;
+    box-shadow: 0 4px 8px rgba(107, 114, 128, 0.25) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Orange Buttons */
+.bg-orange-500, .bg-orange-600, .bg-orange-700 {
+    border-color: #ea580c !important;
+    box-shadow: 0 2px 4px rgba(249, 115, 22, 0.15) !important;
+}
+
+.bg-orange-500:hover, .bg-orange-600:hover, .bg-orange-700:hover {
+    border-color: #c2410c !important;
+    box-shadow: 0 4px 8px rgba(249, 115, 22, 0.25) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* White/Outline Buttons */
+.bg-white, .border-gray-300 {
+    border-color: #d1d5db !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+.bg-white:hover, .border-gray-300:hover {
+    border-color: #9ca3af !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Small Buttons */
+.text-sm button, 
+.text-sm .btn,
+button.text-sm,
+.btn.text-sm {
+    border-width: 1px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Icon Buttons */
+button:has(svg), 
+.btn:has(svg),
+a:has(svg) {
+    border-radius: 8px !important;
+}
+
+/* Focus States */
+button:focus,
+.btn:focus,
+input[type="submit"]:focus,
+input[type="button"]:focus {
+    outline: 2px solid transparent !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+}
+
+/* Disabled States */
+button:disabled,
+.btn:disabled,
+input[type="submit"]:disabled,
+input[type="button"]:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    border-color: #d1d5db !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* Modal Buttons */
+.modal button,
+.modal .btn {
+    min-width: 80px !important;
+}
+
+/* Action Button Groups */
+.space-x-2 > button,
+.space-x-2 > .btn,
+.space-x-3 > button,
+.space-x-3 > .btn {
+    margin-right: 0.5rem !important;
+}
+
+/* Table Action Buttons */
+table button,
+table .btn,
+.table-actions button,
+.table-actions .btn {
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 4px 8px !important;
+}
+
+/* Form Submit Buttons */
+form button[type="submit"],
+form input[type="submit"],
+form .btn-submit {
+    font-weight: 600 !important;
+    min-width: 120px !important;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    button, .btn {
+        min-height: 44px !important;
+        touch-action: manipulation !important;
+    }
+}
+
+/* Special Button Types */
+.btn-outline {
+    background-color: transparent !important;
+    border-width: 2px !important;
+    color: var(--border-color) !important;
+}
+
+.btn-outline:hover {
+    background-color: var(--border-color) !important;
+    color: white !important;
+}
+
+/* Loading State */
+.btn-loading {
+    position: relative !important;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    width: 16px !important;
+    height: 16px !important;
+    margin: -8px 0 0 -8px !important;
+    border: 2px solid transparent !important;
+    border-top: 2px solid currentColor !important;
+    border-radius: 50% !important;
+    animation: spin 1s linear infinite !important;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

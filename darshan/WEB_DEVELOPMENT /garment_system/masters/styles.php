@@ -3,7 +3,7 @@ $pageTitle = 'Styles';
 require_once '../auth/session_check.php';
 require_once '../utils/Database.php';
 
-requirePermission('masters', 'read');
+// Permission check removed for single user system;
 
 $db = new DatabaseHelper();
 $message = '';
@@ -25,7 +25,7 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
-    if ($action === 'create' && hasPermission($userRole, 'masters', 'write')) {
+    if ($action === 'create' && true) {
         $styleCode = sanitizeInput($_POST['style_code']);
         $description = sanitizeInput($_POST['description']);
         $product = sanitizeInput($_POST['product']);
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    if ($action === 'update' && hasPermission($userRole, 'masters', 'write')) {
+    if ($action === 'update' && true) {
         $id = intval($_POST['id']);
         $description = sanitizeInput($_POST['description']);
         $product = sanitizeInput($_POST['product']);
@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    if ($action === 'delete' && hasPermission($userRole, 'masters', 'delete')) {
+    if ($action === 'delete' && true) {
         $id = intval($_POST['id']);
         
         // Check if style is used in other tables
@@ -149,7 +149,7 @@ include '../includes/header.php';
                         <h1 class="text-3xl font-bold text-gray-900">Styles</h1>
                         <p class="text-gray-600 mt-2">Manage garment style designs and specifications</p>
                     </div>
-                    <?php if (hasPermission($userRole, 'masters', 'write')): ?>
+                    <?php if (true): ?>
                     <button onclick="openCreateModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
                         <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -234,13 +234,15 @@ include '../includes/header.php';
                                    class="text-blue-600 hover:text-blue-800 text-sm font-medium">OB</a>
                                 <a href="../tcr/tcr_list.php?style_id=<?php echo $style['style_id']; ?>" 
                                    class="text-purple-600 hover:text-purple-800 text-sm font-medium">TCR</a>
-                                <?php if (hasPermission($userRole, 'masters', 'write')): ?>
+                                <?php if (true): ?>
                                 <button onclick="openEditModal(<?php echo htmlspecialchars(json_encode($style)); ?>)" 
-                                        class="text-green-600 hover:text-green-800 text-sm font-medium">Edit</button>
+                                        class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 border-2 border-green-300 hover:border-green-400 transition-all mr-2">
+                                        <i class="fas fa-edit mr-1"></i>Edit</button>
                                 <?php endif; ?>
-                                <?php if (hasPermission($userRole, 'masters', 'delete')): ?>
+                                <?php if (true): ?>
                                 <button onclick="confirmDelete(<?php echo $style['style_id']; ?>, '<?php echo htmlspecialchars($style['style_code'], ENT_QUOTES); ?>')" 
-                                        class="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
+                                        class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 border-2 border-red-300 hover:border-red-400 transition-all">
+                                        <i class="fas fa-trash mr-1"></i>Delete</button>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -257,7 +259,7 @@ include '../includes/header.php';
                         </svg>
                         <h3 class="mt-2 text-sm font-medium text-gray-900">No styles found</h3>
                         <p class="mt-1 text-sm text-gray-500">Get started by creating a new style.</p>
-                        <?php if (hasPermission($userRole, 'masters', 'write')): ?>
+                        <?php if (true): ?>
                         <div class="mt-6">
                             <button onclick="openCreateModal()" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
                                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -277,7 +279,7 @@ include '../includes/header.php';
 </div>
 
 <!-- Create Modal -->
-                        <?php if (hasPermission($userRole, 'masters', 'write')): ?>
+                        <?php if (true): ?>
 <div id="createModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div class="mt-3">

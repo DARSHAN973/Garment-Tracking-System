@@ -3,24 +3,18 @@ $pageTitle = 'Operations';
 require_once '../auth/session_check.php';
 require_once '../utils/Database.php';
 
-requirePermission('masters', 'read');
+// Simple session check for single user system
+if (!isLoggedIn()) {
+    header('Location: ../auth/login.php');
+    exit();
+}
 
 $db = new DatabaseHelper();
 $message = '';
 $messageType = 'success';
 
-// Safe current role resolution to avoid undefined index warnings
-$userRole = null;
-try {
-    $current = function_exists('getCurrentUser') ? getCurrentUser() : null;
-    if (!empty($current) && isset($current['role'])) {
-        $userRole = $current['role'];
-    } elseif (isset($_SESSION) && isset($_SESSION['role'])) {
-        $userRole = $_SESSION['role'];
-    }
-} catch (Throwable $e) {
-    $userRole = isset($_SESSION['role']) ? $_SESSION['role'] : null;
-}
+// Simplified role for single user system
+$userRole = 'User';
 
 // Get machine types for dropdown
 $machineTypes = $db->getAll('machine_types', ['is_active' => 1]);
@@ -28,7 +22,7 @@ $machineTypes = $db->getAll('machine_types', ['is_active' => 1]);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
-    if ($action === 'create' && hasPermission($userRole, 'masters', 'write')) {
+    if ($action === 'create') {
         $code = sanitizeInput($_POST['code']);
         $name = sanitizeInput($_POST['name']);
         $category = sanitizeInput($_POST['category']);
@@ -113,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    if ($action === 'update' && hasPermission($userRole, 'masters', 'write')) {
+    if ($action === 'update') {
         $id = intval($_POST['id']);
         $name = sanitizeInput($_POST['name']);
         $category = sanitizeInput($_POST['category']);
@@ -164,7 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    if ($action === 'delete' && hasPermission($userRole, 'masters', 'delete')) {
+    if ($action === 'delete') {
         $id = intval($_POST['id']);
         
         // Check if operation is used in other tables
@@ -220,7 +214,7 @@ include '../includes/header.php';
                         <h1 class="text-3xl font-bold text-gray-900">Operations</h1>
                         <p class="text-gray-600 mt-2">Manage sewing and assembly operations catalog</p>
                     </div>
-                    <?php if (hasPermission($userRole, 'masters', 'write')): ?>
+                    <?php if (true): ?>
                     <button onclick="openCreateModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
                         <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -261,7 +255,7 @@ include '../includes/header.php';
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Machine</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <?php if (hasPermission($userRole, 'masters', 'write')): ?>
+                                <?php if (true): ?>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 <?php endif; ?>
                             </tr>
@@ -307,13 +301,17 @@ include '../includes/header.php';
                                         <?php echo $operation['is_active'] ? 'Active' : 'Inactive'; ?>
                                     </span>
                                 </td>
-                                <?php if (hasPermission($userRole, 'masters', 'write')): ?>
+                                <?php if (true): ?>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <button onclick="openEditModal(<?php echo htmlspecialchars(json_encode($operation)); ?>)" 
-                                            class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
-                                    <?php if (hasPermission($userRole, 'masters', 'delete')): ?>
+                                            class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 border-2 border-blue-300 hover:border-blue-400 transition-all mr-2">
+                                        <i class="fas fa-edit mr-1"></i>Edit
+                                    </button>
+                                    <?php if (true): ?>
                                     <button onclick="confirmDelete(<?php echo $operation['operation_id']; ?>, '<?php echo htmlspecialchars($operation['name'], ENT_QUOTES); ?>')" 
-                                            class="text-red-600 hover:text-red-900">Delete</button>
+                                            class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 border-2 border-red-300 hover:border-red-400 transition-all">
+                                        <i class="fas fa-trash mr-1"></i>Delete
+                                    </button>
                                     <?php endif; ?>
                                 </td>
                                 <?php endif; ?>
@@ -329,7 +327,7 @@ include '../includes/header.php';
 </div>
 
 <!-- Create Modal -->
-<?php if (hasPermission($userRole, 'masters', 'write')): ?>
+<?php if (true): ?>
 <div id="createModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-10 mx-auto p-5 border w-[800px] shadow-lg rounded-md bg-white">
         <div class="mt-3">

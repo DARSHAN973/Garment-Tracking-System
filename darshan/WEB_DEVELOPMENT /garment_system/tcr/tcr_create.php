@@ -3,7 +3,11 @@ $pageTitle = 'Enhanced Thread Consumption Report';
 require_once '../auth/session_check.php';
 require_once '../utils/Database.php';
 
-requirePermission('tcr', 'write');
+// Check if user is logged in
+if (!isLoggedIn()) {
+    header('Location: ../auth/login.php');
+    exit();
+}
 
 $db = new DatabaseHelper();
 $message = '';
@@ -156,7 +160,10 @@ foreach ($consumptionFactors as $factor) {
 include '../includes/header.php';
 ?>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="min-h-screen bg-gray-50">
+    <?php include '../includes/sidebar.php'; ?>
+    <div class="ml-64 p-8">
+        <div class="max-w-7xl mx-auto">
     <!-- Header -->
     <div class="mb-8">
         <div class="flex justify-between items-center">
@@ -322,6 +329,7 @@ include '../includes/header.php';
                     </div>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 </div>

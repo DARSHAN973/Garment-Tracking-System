@@ -23,7 +23,7 @@ if (!$scenario) {
 }
 
 // Handle form submissions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && hasPermission($userRole, 'capacity', 'write')) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && true) {
     $action = $_POST['action'] ?? '';
     
     if ($action === 'create_line_config') {
@@ -228,7 +228,7 @@ include '../includes/header.php';
                 <p class="mt-2 text-sm text-gray-600">Configure production lines and assign operations for capacity analysis</p>
             </div>
             
-            <?php if (hasPermission($userRole, 'capacity', 'write')): ?>
+            <?php if (true): ?>
             <button onclick="openCreateLineConfigModal()" 
                     class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
                 <i class="fas fa-plus mr-2"></i>New Line Configuration
@@ -302,7 +302,7 @@ include '../includes/header.php';
                     </div>
                     
                     <div class="flex items-center space-x-3">
-                        <?php if (hasPermission($userRole, 'capacity', 'write')): ?>
+                        <?php if (true): ?>
                         <button onclick="openAssignOperationsModal(<?php echo $lineConfig['line_config_id']; ?>)" 
                                 class="text-blue-600 hover:text-blue-900 text-sm font-medium">
                             Assign Operations
@@ -397,7 +397,7 @@ include '../includes/header.php';
             <i class="fas fa-industry text-6xl text-gray-400 mb-4"></i>
             <h3 class="text-lg font-medium text-gray-900 mb-2">No Line Configurations</h3>
             <p class="text-gray-500 mb-6">Create your first line configuration to start capacity analysis.</p>
-            <?php if (hasPermission($userRole, 'capacity', 'write')): ?>
+            <?php if (true): ?>
             <button onclick="openCreateLineConfigModal()" 
                     class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium">
                 Create Line Configuration
@@ -409,7 +409,7 @@ include '../includes/header.php';
 </div>
 
 <!-- Create Line Configuration Modal -->
-<?php if (hasPermission($userRole, 'capacity', 'write')): ?>
+<?php if (true): ?>
 <div id="createLineConfigModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-10 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
         <div class="mt-3">

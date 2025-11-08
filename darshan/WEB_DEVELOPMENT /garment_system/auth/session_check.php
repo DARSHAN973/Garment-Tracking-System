@@ -21,6 +21,15 @@ function isLoggedIn() {
 }
 
 /**
+ * Simplified permission check - always true for logged in users
+ */
+if (!function_exists('hasPermission')) {
+    function hasPermission($userRole = null, $module = null, $action = null) {
+        return isLoggedIn(); // Single user has full access to everything
+    }
+}
+
+/**
  * Check if session is valid (not expired)
  */
 function isSessionValid() {
@@ -64,10 +73,14 @@ if (!function_exists('hasPermissionSimplified')) {
 
 /**
  * Require permission for a specific module/action.
- * Uses the central permission matrix defined in `config/app_config.php` when available.
+ * Simplified for single user system - just check if logged in
  */
-function requirePermission($module, $action) {
-    requireLogin(); // Only need to check if logged in for simplified admin system
+function requirePermission($module = null, $action = null) {
+    if (!isLoggedIn()) {
+        $redirect_path = dirname($_SERVER['PHP_SELF']) == '/' ? '' : '../';
+        header('Location: ' . $redirect_path . 'auth/login.php');
+        exit();
+    }
 }/**
  * Get current user info
  */

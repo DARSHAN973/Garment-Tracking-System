@@ -3,7 +3,7 @@ $pageTitle = 'TCR Details - Enhanced Thread Consumption';
 require_once '../auth/session_check.php';
 require_once '../utils/Database.php';
 
-requirePermission('tcr', 'read');
+// Permission check removed for single user system;
 
 $db = new DatabaseHelper();
 $tcr_id = intval($_GET['tcr_id'] ?? 0);
@@ -30,7 +30,7 @@ if (empty($tcr)) {
 $tcr = $tcr[0];
 
 // Handle form submissions for adding details
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && hasPermission($_SESSION['role'] ?? 'viewer', 'tcr', 'write')) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && true) {
     $action = $_POST['action'] ?? '';
     
     if ($action === 'add_detail') {
@@ -198,7 +198,7 @@ include '../includes/header.php';
                 <a href="tcr_list.php" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm">
                     <i class="fas fa-arrow-left mr-2"></i>Back to List
                 </a>
-                <?php if (hasPermission($_SESSION['role'] ?? 'viewer', 'tcr', 'write')): ?>
+                <?php if (true): ?>
                 <button onclick="openAddDetailModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
                     <i class="fas fa-plus mr-2"></i>Add Thread Detail
                 </button>
@@ -296,7 +296,7 @@ include '../includes/header.php';
             <div class="text-center py-8">
                 <i class="fas fa-plus-circle text-gray-400 text-4xl mb-4"></i>
                 <p class="text-gray-500">No thread consumption details added yet.</p>
-                <?php if (hasPermission($_SESSION['role'] ?? 'viewer', 'tcr', 'write')): ?>
+                <?php if (true): ?>
                 <button onclick="openAddDetailModal()" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
                     Add First Detail
                 </button>
@@ -315,7 +315,7 @@ include '../includes/header.php';
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factors</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consumption</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
-                            <?php if (hasPermission($_SESSION['role'] ?? 'viewer', 'tcr', 'write')): ?>
+                            <?php if (true): ?>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             <?php endif; ?>
                         </tr>
@@ -369,7 +369,7 @@ include '../includes/header.php';
                                 <div class="text-sm text-gray-900">$<?php echo number_format($detail['cost_per_unit'], 4); ?></div>
                                 <div class="text-xs text-gray-500">@$<?php echo number_format($detail['cost_per_meter'], 4); ?>/m</div>
                             </td>
-                            <?php if (hasPermission($_SESSION['role'] ?? 'viewer', 'tcr', 'write')): ?>
+                            <?php if (true): ?>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <button onclick="editDetail(<?php echo $detail['tcr_detail_id']; ?>)" class="text-blue-600 hover:text-blue-900 mr-3">
                                     <i class="fas fa-edit"></i>
@@ -382,7 +382,7 @@ include '../includes/header.php';
                         </tr>
                         <?php if (!empty($detail['notes'])): ?>
                         <tr class="bg-gray-50">
-                            <td colspan="<?php echo hasPermission($_SESSION['role'] ?? 'viewer', 'tcr', 'write') ? 9 : 8; ?>" class="px-6 py-2">
+                            <td colspan="<?php echo true ? 9 : 8; ?>" class="px-6 py-2">
                                 <div class="text-sm text-gray-600">
                                     <strong>Notes:</strong> <?php echo htmlspecialchars($detail['notes']); ?>
                                 </div>
@@ -393,7 +393,7 @@ include '../includes/header.php';
                     </tbody>
                     <tfoot class="bg-gray-100">
                         <tr>
-                            <td colspan="<?php echo hasPermission($_SESSION['role'] ?? 'viewer', 'tcr', 'write') ? 6 : 5; ?>" class="px-6 py-3 text-sm font-medium text-gray-900 text-right">
+                            <td colspan="<?php echo true ? 6 : 5; ?>" class="px-6 py-3 text-sm font-medium text-gray-900 text-right">
                                 Totals:
                             </td>
                             <td class="px-6 py-3 text-sm font-bold text-gray-900">
@@ -402,7 +402,7 @@ include '../includes/header.php';
                             <td class="px-6 py-3 text-sm font-bold text-gray-900">
                                 $<?php echo number_format($totalCost, 4); ?>
                             </td>
-                            <?php if (hasPermission($_SESSION['role'] ?? 'viewer', 'tcr', 'write')): ?>
+                            <?php if (true): ?>
                             <td></td>
                             <?php endif; ?>
                         </tr>

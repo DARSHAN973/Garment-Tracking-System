@@ -8,7 +8,7 @@ require_once '../auth/session_check.php';
 require_once '../utils/ExcelExporter.php';
 
 // Check permissions
-requirePermission('export', 'read');
+// Permission check removed for single user system;
 
 $export_type = $_GET['type'] ?? '';
 $record_id = $_GET['id'] ?? null;

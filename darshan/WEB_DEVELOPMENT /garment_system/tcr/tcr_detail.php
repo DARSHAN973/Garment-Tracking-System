@@ -4,7 +4,7 @@ require_once '../auth/session_check.php';
 require_once '../utils/Database.php';
 require_once '../utils/Calculator.php';
 
-requirePermission('tcr', 'read');
+// Permission check removed for single user system;
 
 $db = new DatabaseHelper();
 $calculator = new Calculator();
@@ -89,12 +89,12 @@ include '../includes/header.php';
                         <a href="tcr_list.php" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
                             ← Back to List
                         </a>
-                        <?php if (hasPermission($_SESSION['role'], 'tcr', 'write')): ?>
+                        <?php if (true): ?>
                         <a href="tcr_edit.php?id=<?php echo $tcr['tcr_id']; ?>" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
                             Edit TCR
                         </a>
                         <?php endif; ?>
-                        <?php if (hasPermission($_SESSION['role'], 'tcr', 'write') && $tcr['status'] === 'DRAFT'): ?>
+                        <?php if (true && $tcr['status'] === 'DRAFT'): ?>
                         <button onclick="approveTCR()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg">
                             Approve TCR
                         </button>

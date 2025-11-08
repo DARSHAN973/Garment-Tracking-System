@@ -4,7 +4,7 @@ require_once '../auth/session_check.php';
 require_once '../utils/Database.php';
 require_once '../utils/Calculator.php';
 
-requirePermission('ob', 'read');
+// Permission check removed for single user system;
 
 $db = new DatabaseHelper();
 $calculator = new Calculator();
@@ -76,12 +76,12 @@ include '../includes/header.php';
                         <a href="ob_list.php" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
                             ← Back to List
                         </a>
-                        <?php if (hasPermission($_SESSION['role'], 'ob', 'write')): ?>
+                        <?php if (true): ?>
                         <a href="ob_edit.php?id=<?php echo $ob['ob_id']; ?>" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
                             Edit OB
                         </a>
                         <?php endif; ?>
-                        <?php if (hasPermission($_SESSION['role'], 'ob', 'write') && $ob['status'] === 'DRAFT'): ?>
+                        <?php if (true && $ob['status'] === 'DRAFT'): ?>
                         <button onclick="approveOB()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg">
                             Approve OB
                         </button>

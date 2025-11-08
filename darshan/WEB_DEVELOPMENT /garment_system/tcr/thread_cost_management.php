@@ -3,7 +3,7 @@ $pageTitle = 'Thread Cost Management';
 require_once '../auth/session_check.php';
 require_once '../utils/Database.php';
 
-requirePermission('tcr', 'write');
+// Permission check removed for single user system;
 
 $db = new DatabaseHelper();
 

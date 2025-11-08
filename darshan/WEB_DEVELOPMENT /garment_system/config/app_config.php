@@ -40,10 +40,8 @@ define('MAX_WORKING_HOURS', 12);
 define('MIN_SMV', 0.01);
 define('MAX_THREAD_PCT_SUM', 1.0);
 
-// User Roles
-define('ROLE_IE', 'IE');
-define('ROLE_PLANNER', 'Planner');
-define('ROLE_ADMIN', 'Admin');
+// User Roles - Simplified for single user system
+define('ROLE_USER', 'User');
 
 // Status Values
 define('STATUS_DRAFT', 'Draft');
@@ -61,8 +59,10 @@ error_reporting(E_ALL);
 // Set application timezone
 date_default_timezone_set(APP_TIMEZONE);
 
-// Update session timeout with the defined constant
-ini_set('session.gc_maxlifetime', SESSION_TIMEOUT);
+// Update session timeout with the defined constant (only if session not active)
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.gc_maxlifetime', SESSION_TIMEOUT);
+}
 
 // Create upload directory if it doesn't exist
 if (!is_dir(UPLOAD_PATH)) {
@@ -70,47 +70,10 @@ if (!is_dir(UPLOAD_PATH)) {
 }
 
 /**
- * Permission Matrix
- * Defines what each role can do
+ * Simplified Authentication - Single User System
+ * All logged-in users have full access to everything
+ * Note: hasPermission function is defined in session_check.php to avoid circular dependencies
  */
-$PERMISSIONS = [
-    ROLE_IE => [
-        'masters' => ['read', 'write'],
-        'ob' => ['read', 'write'],
-        'tcr' => ['read', 'write'],
-        'method' => ['read', 'write'],
-        'method_analysis' => ['read', 'write'],
-        'imports' => ['read', 'write'],
-        'approvals' => ['submit', 'approve']
-    ],
-    ROLE_PLANNER => [
-        'masters' => ['read'],
-        'ob' => ['read'],
-        'tcr' => ['read'],
-        'method' => ['read'],
-        'method_analysis' => ['read'],
-        'imports' => ['read'],
-        'approvals' => []
-    ],
-    ROLE_ADMIN => [
-        'masters' => ['read', 'write', 'delete'],
-        'ob' => ['read', 'write', 'delete'],
-        'tcr' => ['read', 'write', 'delete'],
-        'method' => ['read', 'write', 'delete'],
-        'method_analysis' => ['read', 'write', 'delete'],
-        'imports' => ['read', 'write', 'delete'],
-        'approvals' => ['submit', 'approve', 'override']
-    ]
-];
-
-/**
- * Check if user has permission
- */
-function hasPermission($userRole, $module, $action) {
-    global $PERMISSIONS;
-    return isset($PERMISSIONS[$userRole][$module]) && 
-           in_array($action, $PERMISSIONS[$userRole][$module]);
-}
 
 /**
  * Get formatted date time for display (IST)

@@ -4,7 +4,7 @@ require_once '../auth/session_check.php';
 require_once '../utils/Database.php';
 require_once '../utils/Calculator.php';
 
-requirePermission('ob', 'read');
+// Permission check removed for single user system;
 
 $db = new DatabaseHelper();
 $calculator = new Calculator();
@@ -102,7 +102,7 @@ include '../includes/header.php';
                         <h1 class="text-3xl font-bold text-gray-900">Operation Breakdown</h1>
                         <p class="text-gray-600 mt-2">Manage garment production operations and SMV calculations</p>
                     </div>
-                    <?php if (hasPermission($userRole, 'ob', 'write')): ?>
+                    <?php if (true): ?>
                     <a href="ob_create.php" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
                         <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -232,11 +232,11 @@ include '../includes/header.php';
                                 <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
                                     <a href="ob_detail.php?id=<?php echo $ob['ob_id']; ?>" 
                                        class="text-blue-600 hover:text-blue-900">View</a>
-                                    <?php if (hasPermission($userRole, 'ob', 'write')): ?>
+                                    <?php if (true): ?>
                                     <a href="ob_edit.php?id=<?php echo $ob['ob_id']; ?>" 
                                        class="text-green-600 hover:text-green-900">Edit</a>
                                     <?php endif; ?>
-                                    <?php if (hasPermission($userRole, 'ob', 'write') && $ob['status'] === 'DRAFT'): ?>
+                                    <?php if (true && $ob['status'] === 'DRAFT'): ?>
                                     <button onclick="approveOB(<?php echo $ob['ob_id']; ?>)" 
                                             class="text-purple-600 hover:text-purple-900">Approve</button>
                                     <?php endif; ?>
@@ -253,7 +253,7 @@ include '../includes/header.php';
                                         </svg>
                                         <h3 class="text-sm font-medium text-gray-900 mb-1">No operation breakdowns found</h3>
                                         <p class="text-sm text-gray-500">Get started by creating your first OB.</p>
-                                        <?php if (hasPermission($userRole, 'ob', 'write')): ?>
+                                        <?php if (true): ?>
                                         <div class="mt-4">
                                             <a href="ob_create.php" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
                                                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

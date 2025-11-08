@@ -19,11 +19,9 @@ body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
 try {
     $db = getDbConnection();
     echo "<div class='success'>✅ Database Connected - Ready for Data Entry</div>";
-    
     echo "<div class='module'>";
     echo "<h2>1️⃣ Master Data Entry Points</h2>";
     echo "<p>Foundation data that users enter to set up the production environment:</p>";
-    
     echo "<div class='entry-point'>";
     echo "<h3>📝 Operations (/masters/operations.php)</h3>";
     echo "<p><strong>Where Users Add:</strong> Operation definitions with SMV values</p>";

@@ -3,7 +3,7 @@ $pageTitle = 'Excel Upload';
 require_once '../auth/session_check.php';
 require_once '../utils/Database.php';
 
-requirePermission('imports', 'write');
+// Permission check removed for single user system;
 
 $db = new DatabaseHelper();
 $message = '';

@@ -4,7 +4,7 @@ require_once '../auth/session_check.php';
 require_once '../utils/Database.php';
 require_once '../utils/Calculator.php';
 
-requirePermission('method_analysis', 'write');
+// Permission check removed for single user system;
 
 $db = new DatabaseHelper();
 $calculator = new Calculator();

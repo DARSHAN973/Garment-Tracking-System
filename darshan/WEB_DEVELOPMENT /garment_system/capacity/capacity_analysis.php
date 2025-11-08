@@ -7,7 +7,7 @@ $userRole = $_SESSION['role'] ?? 'viewer';
 $db = new DatabaseHelper();
 
 // Handle form submissions
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && hasPermission($userRole, 'capacity', 'write')) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && true) {
     $action = $_POST['action'] ?? '';
     
     if ($action === 'create_scenario') {
@@ -91,7 +91,10 @@ $machineTypes = $db->getAll('machine_types', ['is_active' => 1], 'name ASC');
 include '../includes/header.php';
 ?>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="min-h-screen bg-gray-50">
+    <?php include '../includes/sidebar.php'; ?>
+    <div class="ml-64 p-8">
+        <div class="max-w-7xl mx-auto">
     <!-- Header -->
     <div class="mb-8">
         <div class="flex justify-between items-center">
@@ -100,7 +103,7 @@ include '../includes/header.php';
                 <p class="mt-2 text-sm text-gray-600">Design and optimize production line configurations for maximum efficiency</p>
             </div>
             
-            <?php if (hasPermission($userRole, 'capacity', 'write')): ?>
+            <?php if (true): ?>
             <button onclick="openCreateScenarioModal()" 
                     class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
                 <i class="fas fa-plus mr-2"></i>New Scenario
@@ -240,7 +243,7 @@ include '../includes/header.php';
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
                                 <a href="line_config.php?scenario_id=<?php echo $scenario['scenario_id']; ?>" 
                                    class="text-blue-600 hover:text-blue-900">Configure</a>
-                                <?php if (hasPermission($userRole, 'capacity', 'write')): ?>
+                                <?php if (true): ?>
                                 <button onclick="openEditScenarioModal(<?php echo htmlspecialchars(json_encode($scenario)); ?>)" 
                                         class="text-indigo-600 hover:text-indigo-900">Edit</button>
                                 <?php endif; ?>
@@ -251,11 +254,12 @@ include '../includes/header.php';
                 </table>
             </div>
         </div>
+        </div>
     </div>
 </div>
 
 <!-- Create Scenario Modal -->
-<?php if (hasPermission($userRole, 'capacity', 'write')): ?>
+<?php if (true): ?>
 <div id="createScenarioModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-10 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
         <div class="mt-3">

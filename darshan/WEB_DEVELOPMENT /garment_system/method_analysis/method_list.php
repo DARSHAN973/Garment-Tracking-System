@@ -4,7 +4,7 @@ require_once '../auth/session_check.php';
 require_once '../utils/Database.php';
 require_once '../utils/Calculator.php';
 
-requirePermission('method_analysis', 'read');
+// Permission check removed for single user system;
 
 $db = new DatabaseHelper();
 $calculator = new Calculator();
@@ -101,7 +101,7 @@ include '../includes/header.php';
                         <h1 class="text-3xl font-bold text-gray-900">Method Analysis</h1>
                         <p class="text-gray-600 mt-2">Time studies and method documentation using GSD elements</p>
                     </div>
-                    <?php if (hasPermission($userRole, 'method_analysis', 'write')): ?>
+                    <?php if (true): ?>
                     <a href="method_create.php" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
                         <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -228,11 +228,11 @@ include '../includes/header.php';
                             <div class="flex space-x-2">
                                 <a href="method_detail.php?id=<?php echo $method['method_analysis_id']; ?>" 
                                    class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">View</a>
-                                <?php if (hasPermission($userRole, 'method_analysis', 'write')): ?>
+                                <?php if (true): ?>
                                 <a href="method_edit.php?id=<?php echo $method['method_analysis_id']; ?>" 
                                    class="text-green-600 hover:text-green-800 text-sm font-medium">Edit</a>
                                 <?php endif; ?>
-                                <?php if (hasPermission($userRole, 'method_analysis', 'write') && $method['status'] === 'COMPLETED'): ?>
+                                <?php if (true && $method['status'] === 'COMPLETED'): ?>
                                 <button onclick="approveMethod(<?php echo $method['method_analysis_id']; ?>)" 
                                         class="text-blue-600 hover:text-blue-800 text-sm font-medium">Approve</button>
                                 <?php endif; ?>
@@ -251,7 +251,7 @@ include '../includes/header.php';
                         </svg>
                         <h3 class="mt-2 text-sm font-medium text-gray-900">No method analysis found</h3>
                         <p class="mt-1 text-sm text-gray-500">Get started by creating a new time study.</p>
-                        <?php if (hasPermission($userRole, 'method_analysis', 'write')): ?>
+                        <?php if (true): ?>
                         <div class="mt-6">
                             <a href="method_create.php" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

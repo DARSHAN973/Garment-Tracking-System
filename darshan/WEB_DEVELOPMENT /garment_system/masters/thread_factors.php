@@ -3,7 +3,7 @@ $pageTitle = 'Thread Factors';
 require_once '../auth/session_check.php';
 require_once '../utils/Database.php';
 
-requirePermission('masters', 'read');
+// Permission check removed for single user system;
 
 $db = new DatabaseHelper();
 $message = '';
@@ -15,7 +15,7 @@ $machineTypes = $db->getAll('machine_types', ['is_active' => 1]);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
-    if ($action === 'create' && hasPermission($_SESSION['role'], 'masters', 'write')) {
+    if ($action === 'create' && true) {
         $machineTypeId = intval($_POST['machine_type_id']);
         $factorPerCm = floatval($_POST['factor_per_cm']);
         $needleCount = intval($_POST['needle_count']);
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    if ($action === 'update' && hasPermission($_SESSION['role'], 'masters', 'write')) {
+    if ($action === 'update' && true) {
         $id = intval($_POST['id']);
         $factorPerCm = floatval($_POST['factor_per_cm']);
         $needleCount = intval($_POST['needle_count']);
@@ -106,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    if ($action === 'delete' && hasPermission($_SESSION['role'], 'masters', 'delete')) {
+    if ($action === 'delete' && true) {
         $id = intval($_POST['id']);
         
         // Check if thread factor is used in other tables
@@ -160,7 +160,7 @@ include '../includes/header.php';
                         <h1 class="text-3xl font-bold text-gray-900">Thread Factors</h1>
                         <p class="text-gray-600 mt-2">Manage thread consumption factors by machine type</p>
                     </div>
-                    <?php if (hasPermission($_SESSION['role'], 'masters', 'write')): ?>
+                    <?php if (true): ?>
                     <button onclick="openCreateModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
                         <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -199,7 +199,7 @@ include '../includes/header.php';
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% Splits</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allowances</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <?php if (hasPermission($_SESSION['role'], 'masters', 'write')): ?>
+                                <?php if (true): ?>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 <?php endif; ?>
                             </tr>
@@ -238,11 +238,11 @@ include '../includes/header.php';
                                         <?php echo $factor['is_active'] ? 'Active' : 'Inactive'; ?>
                                     </span>
                                 </td>
-                                <?php if (hasPermission($_SESSION['role'], 'masters', 'write')): ?>
+                                <?php if (true): ?>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <button onclick="openEditModal(<?php echo htmlspecialchars(json_encode($factor)); ?>)" 
                                             class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
-                                    <?php if (hasPermission($_SESSION['role'], 'masters', 'delete')): ?>
+                                    <?php if (true): ?>
                                     <button onclick="confirmDelete(<?php echo $factor['factor_id']; ?>, 'Factor for <?php echo htmlspecialchars($factor['machine_name'], ENT_QUOTES); ?>')" 
                                             class="text-red-600 hover:text-red-900">Delete</button>
                                     <?php endif; ?>
@@ -260,7 +260,7 @@ include '../includes/header.php';
 </div>
 
 <!-- Create Modal -->
-<?php if (hasPermission($_SESSION['role'], 'masters', 'write')): ?>
+<?php if (true): ?>
 <div id="createModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-10 mx-auto p-5 border w-[600px] shadow-lg rounded-md bg-white">
         <div class="mt-3">

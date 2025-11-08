@@ -4,7 +4,7 @@ require_once '../auth/session_check.php';
 require_once '../utils/Database.php';
 require_once '../utils/Calculator.php';
 
-requirePermission('tcr', 'read');
+// Permission check removed for single user system;
 
 $db = new DatabaseHelper();
 $calculator = new Calculator();
@@ -101,7 +101,7 @@ include '../includes/header.php';
                         <h1 class="text-3xl font-bold text-gray-900">Thread Consumption Report</h1>
                         <p class="text-gray-600 mt-2">Calculate and manage thread consumption for garment production</p>
                     </div>
-                    <?php if (hasPermission($userRole, 'tcr', 'write')): ?>
+                    <?php if (true): ?>
                     <a href="tcr_create.php" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
                         <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -227,14 +227,17 @@ include '../includes/header.php';
                             
                             <div class="flex space-x-2">
                                 <a href="tcr_detail.php?id=<?php echo $tcr['tcr_id']; ?>" 
-                                   class="text-purple-600 hover:text-purple-800 text-sm font-medium">View</a>
-                                <?php if (hasPermission($userRole, 'tcr', 'write')): ?>
+                                   class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 border-2 border-purple-300 hover:border-purple-400 transition-all">
+                                   <i class="fas fa-eye mr-1"></i>View</a>
+                                <?php if (true): ?>
                                 <a href="tcr_edit.php?id=<?php echo $tcr['tcr_id']; ?>" 
-                                   class="text-green-600 hover:text-green-800 text-sm font-medium">Edit</a>
+                                   class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 border-2 border-green-300 hover:border-green-400 transition-all">
+                                   <i class="fas fa-edit mr-1"></i>Edit</a>
                                 <?php endif; ?>
-                                <?php if (hasPermission($userRole, 'tcr', 'write') && $tcr['status'] === 'DRAFT'): ?>
+                                <?php if (true && $tcr['status'] === 'DRAFT'): ?>
                                 <button onclick="approveTCR(<?php echo $tcr['tcr_id']; ?>)" 
-                                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">Approve</button>
+                                        class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 border-2 border-blue-300 hover:border-blue-400 transition-all">
+                                        <i class="fas fa-check mr-1"></i>Approve</button>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -251,7 +254,7 @@ include '../includes/header.php';
                         </svg>
                         <h3 class="mt-2 text-sm font-medium text-gray-900">No TCR records found</h3>
                         <p class="mt-1 text-sm text-gray-500">Get started by creating a new Thread Consumption Report.</p>
-                        <?php if (hasPermission($userRole, 'tcr', 'write')): ?>
+                        <?php if (true): ?>
                         <div class="mt-6">
                             <a href="tcr_create.php" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700">
                                 <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
