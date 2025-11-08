@@ -177,10 +177,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $messageType = 'error';
         } else {
             $oldData = $db->getById('operations', $id);
-            $result = $db->delete('operations', $id);
+            $result = $db->hardDelete('operations', $id);
             
             if ($result) {
-                $message = 'Operation deleted successfully.';
+                $message = 'Operation permanently deleted successfully.';
                 logActivity('operations', $id, 'DELETE', $oldData);
             } else {
                 $message = 'Error deleting operation.';
@@ -190,13 +190,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get all operations with machine type names
+// Handle search and pagination
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$page = max(1, intval($_GET['page'] ?? 1));
+$perPage = 20; // Items per page
+$offset = ($page - 1) * $perPage;
+
+// Build search query
+$searchWhere = '';
+$searchParams = [];
+
+if (!empty($search)) {
+    $searchWhere = " WHERE (o.name LIKE ? OR o.code LIKE ? OR o.category LIKE ? OR o.description LIKE ?)";
+    $searchTerm = "%{$search}%";
+    $searchParams = [$searchTerm, $searchTerm, $searchTerm, $searchTerm];
+}
+
+// Get total count for pagination
+$totalQuery = "
+    SELECT COUNT(*) as total
+    FROM operations o 
+    {$searchWhere}
+";
+$totalResult = $db->queryOne($totalQuery, $searchParams);
+$totalItems = $totalResult['total'] ?? 0;
+$totalPages = ceil($totalItems / $perPage);
+
+// Get operations with machine type names and pagination
 $operations = $db->query("
     SELECT o.*, m.name as machine_name 
     FROM operations o 
     LEFT JOIN machine_types m ON o.default_machine_type_id = m.machine_type_id 
+    {$searchWhere}
     ORDER BY o.category ASC, o.name ASC
-");
+    LIMIT {$perPage} OFFSET {$offset}
+", $searchParams);
 
 include '../includes/header.php';
 ?>
@@ -236,6 +264,37 @@ include '../includes/header.php';
                 </div>
             </div>
             <?php endif; ?>
+
+            <!-- Search and Filters -->
+            <div class="mb-6 bg-white rounded-lg shadow p-6">
+                <form method="GET" class="flex gap-4 items-end">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search Operations</label>
+                        <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Search by name, code, category, or description...">
+                    </div>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                    <?php if (!empty($search)): ?>
+                    <a href="?" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-times mr-2"></i>Clear
+                    </a>
+                    <?php endif; ?>
+                </form>
+            </div>
+
+            <!-- Results Summary -->
+            <div class="mb-4 text-sm text-gray-600">
+                <?php if (!empty($search)): ?>
+                Showing <?php echo count($operations); ?> of <?php echo $totalItems; ?> results for "<?php echo htmlspecialchars($search); ?>"
+                <?php else: ?>
+                Showing <?php echo count($operations); ?> of <?php echo $totalItems; ?> operations
+                <?php endif; ?>
+                (Page <?php echo $page; ?> of <?php echo $totalPages; ?>)
+            </div>
 
             <!-- Operations Table -->
             <div class="bg-white rounded-lg shadow-md">
@@ -321,6 +380,58 @@ include '../includes/header.php';
                     </table>
                 </div>
             </div>
+
+            <!-- Pagination -->
+            <?php if ($totalPages > 1): ?>
+            <div class="mt-8 flex justify-center">
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <?php if ($page > 1): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Previous</span>
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php
+                    $startPage = max(1, $page - 2);
+                    $endPage = min($totalPages, $page + 2);
+                    
+                    if ($startPage > 1): ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => 1])); ?>" 
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
+                        <?php if ($startPage > 2): ?>
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    
+                    <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>" 
+                       class="relative inline-flex items-center px-4 py-2 border <?php echo $i === $page ? 'bg-blue-50 border-blue-500 text-blue-600' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'; ?> text-sm font-medium"><?php echo $i; ?></a>
+                    <?php endfor; ?>
+                    
+                    <?php if ($endPage < $totalPages): ?>
+                        <?php if ($endPage < $totalPages - 1): ?>
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                        <?php endif; ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $totalPages])); ?>" 
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"><?php echo $totalPages; ?></a>
+                    <?php endif; ?>
+                    
+                    <?php if ($page < $totalPages): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Next</span>
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </a>
+                    <?php endif; ?>
+                </nav>
+            </div>
+            <?php endif; ?>
 
         </div>
     </div>

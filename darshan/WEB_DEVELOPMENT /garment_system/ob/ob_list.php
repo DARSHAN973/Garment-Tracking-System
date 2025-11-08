@@ -25,6 +25,7 @@ try {
 }
 
 // Get filter parameters
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $styleFilter = $_GET['style_id'] ?? '';
 $statusFilter = $_GET['status'] ?? '';
 $pageSize = 20;
@@ -34,6 +35,14 @@ $offset = ($page - 1) * $pageSize;
 // Build WHERE clause
 $whereConditions = ["o.is_deleted = 0"];
 $params = [];
+
+if (!empty($search)) {
+    $whereConditions[] = "(o.ob_name LIKE ? OR s.style_code LIKE ? OR s.description LIKE ?)";
+    $searchTerm = "%{$search}%";
+    $params[] = $searchTerm;
+    $params[] = $searchTerm;
+    $params[] = $searchTerm;
+}
 
 if (!empty($styleFilter)) {
     $whereConditions[] = "o.style_id = ?";
@@ -128,6 +137,13 @@ include '../includes/header.php';
             <!-- Filters -->
             <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
                 <form method="GET" class="flex flex-wrap gap-4 items-end">
+                    <div class="flex-1 min-w-64">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                        <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Search by OB name, style code, or description...">
+                    </div>
+                    
                     <div class="flex-1 min-w-48">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Style</label>
                         <select name="style_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">

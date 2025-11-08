@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading System Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="assets/css/loading.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8 text-gray-900">Loading System Test</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Manual Loading Tests -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Manual Loading Tests</h2>
+                
+                <button onclick="showLoading('Testing...', 'Manual loading test')" 
+                        class="bg-blue-500 text-white px-4 py-2 rounded mb-2 mr-2">
+                    Show Loading
+                </button>
+                
+                <button onclick="hideLoading()" 
+                        class="bg-gray-500 text-white px-4 py-2 rounded mb-2">
+                    Hide Loading
+                </button>
+                
+                <button onclick="showPageLoader()" 
+                        class="bg-green-500 text-white px-4 py-2 rounded mb-2 mr-2">
+                    Show Page Loader
+                </button>
+                
+                <button onclick="hidePageLoader()" 
+                        class="bg-red-500 text-white px-4 py-2 rounded mb-2">
+                    Hide Page Loader
+                </button>
+            </div>
+            
+            <!-- Form Test -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Form Loading Test</h2>
+                
+                <form method="POST" action="#" onsubmit="return false;">
+                    <input type="hidden" name="action" value="create">
+                    <input type="text" placeholder="Test field" class="border p-2 rounded w-full mb-4">
+                    <button type="submit" class="bg-purple-500 text-white px-4 py-2 rounded">
+                        Submit Form (Shows Loading)
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Link Tests -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Navigation Tests</h2>
+                
+                <a href="masters/styles.php" class="block bg-blue-600 text-white px-4 py-2 rounded mb-2 text-center">
+                    Navigate to Styles (Shows Loading)
+                </a>
+                
+                <a href="dashboard.php" class="block bg-green-600 text-white px-4 py-2 rounded mb-2 text-center">
+                    Navigate to Dashboard (Shows Loading)
+                </a>
+                
+                <a href="#test" class="block bg-gray-600 text-white px-4 py-2 rounded text-center">
+                    Anchor Link (No Loading)
+                </a>
+            </div>
+            
+            <!-- Button Tests -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">Button Action Tests</h2>
+                
+                <button onclick="openCreateModal()" class="bg-indigo-500 text-white px-4 py-2 rounded mb-2 mr-2">
+                    Open Modal (Shows Loading)
+                </button>
+                
+                <button onclick="confirmDelete(1, 'Test Item')" class="bg-red-500 text-white px-4 py-2 rounded mb-2">
+                    Delete Action (Shows Loading)
+                </button>
+                
+                <button onclick="editItem()" class="bg-yellow-500 text-white px-4 py-2 rounded mb-2">
+                    Edit Action (Shows Loading)
+                </button>
+            </div>
+        </div>
+        
+        <!-- Status Display -->
+        <div id="status" class="mt-8 p-4 bg-gray-200 rounded">
+            <h3 class="font-semibold">System Status:</h3>
+            <p>Loading system initialized: <span id="loadingStatus">Checking...</span></p>
+            <p>Global loader present: <span id="globalLoaderStatus">Checking...</span></p>
+            <p>Page loader present: <span id="pageLoaderStatus">Checking...</span></p>
+        </div>
+    </div>
+
+    <script src="assets/js/loading.js"></script>
+    <script>
+        // Test functions
+        function openCreateModal() {
+            showLoading('Opening Form...', 'Preparing the creation form');
+            setTimeout(hideLoading, 2000);
+        }
+        
+        function confirmDelete(id, name) {
+            showLoading('Preparing Delete...', 'Loading delete confirmation');
+            setTimeout(hideLoading, 1500);
+        }
+        
+        function editItem() {
+            showLoading('Loading Editor...', 'Preparing the edit form');
+            setTimeout(hideLoading, 1500);
+        }
+        
+        // Check system status
+        setTimeout(() => {
+            document.getElementById('loadingStatus').textContent = 
+                typeof window.showLoading === 'function' ? 'OK' : 'FAILED';
+            document.getElementById('globalLoaderStatus').textContent = 
+                document.getElementById('globalLoader') ? 'OK' : 'FAILED';
+            document.getElementById('pageLoaderStatus').textContent = 
+                document.getElementById('pageLoader') ? 'OK' : 'FAILED';
+        }, 1000);
+        
+        // Test auto-loading on page load
+        setTimeout(() => {
+            showLoading('Loading Test Page...', 'Initializing test interface');
+            setTimeout(hideLoading, 2000);
+        }, 500);
+    </script>
+</body>
+</html>

@@ -138,10 +138,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $messageType = 'error';
         } else {
             $oldData = $db->getById('gsd_elements', $id);
-            $result = $db->delete('gsd_elements', $id);
+            $result = $db->hardDelete('gsd_elements', $id, 'element_id');
             
             if ($result) {
-                $message = 'GSD Element deleted successfully.';
+                $message = 'GSD Element permanently deleted successfully.';
                 logActivity('gsd_elements', $id, 'DELETE', $oldData);
             } else {
                 $message = 'Error deleting GSD element.';
@@ -151,8 +151,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get all GSD elements
-$gsdElements = $db->getAll('gsd_elements', []);
+// Search and pagination
+$search = $_GET['search'] ?? '';
+$page = max(1, intval($_GET['page'] ?? 1));
+$limit = 20;
+$offset = ($page - 1) * $limit;
+
+// Build search condition
+$searchCondition = '';
+$searchParams = [];
+if (!empty($search)) {
+    $searchCondition = "WHERE (code LIKE ? OR category LIKE ? OR description LIKE ?)";
+    $searchParams = ["%$search%", "%$search%", "%$search%"];
+}
+
+// Get total count for pagination
+$countQuery = "SELECT COUNT(*) as total FROM gsd_elements $searchCondition";
+$totalResult = $db->queryOne($countQuery, $searchParams);
+$totalRecords = $totalResult['total'];
+$totalPages = ceil($totalRecords / $limit);
+
+// Get GSD elements with search and pagination
+$query = "SELECT * FROM gsd_elements $searchCondition ORDER BY code ASC, element_id DESC LIMIT $limit OFFSET $offset";
+$gsdElements = $db->query($query, $searchParams);
+
+// Calculate display numbers for results summary
+$startRecord = $totalRecords > 0 ? $offset + 1 : 0;
+$endRecord = min($offset + $limit, $totalRecords);
 
 include '../includes/header.php';
 ?>
@@ -192,6 +217,47 @@ include '../includes/header.php';
                 </div>
             </div>
             <?php endif; ?>
+
+            <!-- Search and Results Summary -->
+            <div class="bg-white rounded-lg shadow-md mb-6">
+                <div class="px-6 py-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold text-gray-900">Search GSD Elements</h2>
+                        <?php if (!empty($search)): ?>
+                        <a href="gsd_elements.php" class="text-sm text-gray-600 hover:text-gray-800">Clear Search</a>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <form method="GET" class="flex gap-4">
+                        <div class="flex-1">
+                            <input type="text" 
+                                   name="search" 
+                                   value="<?php echo htmlspecialchars($search); ?>" 
+                                   placeholder="Search by element code, category, or description..." 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            Search
+                        </button>
+                    </form>
+                    
+                    <?php if ($totalRecords > 0): ?>
+                    <div class="mt-4 text-sm text-gray-600">
+                        Showing <?php echo $startRecord; ?>-<?php echo $endRecord; ?> of <?php echo $totalRecords; ?> results
+                        <?php if (!empty($search)): ?>
+                        for "<span class="font-medium"><?php echo htmlspecialchars($search); ?></span>"
+                        <?php endif; ?>
+                    </div>
+                    <?php elseif (!empty($search)): ?>
+                    <div class="mt-4 text-sm text-gray-600">
+                        No results found for "<span class="font-medium"><?php echo htmlspecialchars($search); ?></span>"
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
 
             <!-- GSD Elements Table -->
             <div class="bg-white rounded-lg shadow-md">
@@ -265,6 +331,58 @@ include '../includes/header.php';
                     </table>
                 </div>
             </div>
+
+            <!-- Pagination -->
+            <?php if ($totalPages > 1): ?>
+            <div class="mt-8 flex justify-center">
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <?php if ($page > 1): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Previous</span>
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php
+                    $startPage = max(1, $page - 2);
+                    $endPage = min($totalPages, $page + 2);
+                    
+                    if ($startPage > 1): ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => 1])); ?>" 
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
+                        <?php if ($startPage > 2): ?>
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    
+                    <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>" 
+                       class="relative inline-flex items-center px-4 py-2 border <?php echo $i === $page ? 'bg-blue-50 border-blue-500 text-blue-600' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'; ?> text-sm font-medium"><?php echo $i; ?></a>
+                    <?php endfor; ?>
+                    
+                    <?php if ($endPage < $totalPages): ?>
+                        <?php if ($endPage < $totalPages - 1): ?>
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                        <?php endif; ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $totalPages])); ?>" 
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"><?php echo $totalPages; ?></a>
+                    <?php endif; ?>
+                    
+                    <?php if ($page < $totalPages): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Next</span>
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </a>
+                    <?php endif; ?>
+                </nav>
+            </div>
+            <?php endif; ?>
 
         </div>
     </div>

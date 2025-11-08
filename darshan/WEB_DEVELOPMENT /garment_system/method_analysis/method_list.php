@@ -12,6 +12,7 @@ $message = '';
 $messageType = 'success';
 
 // Get filter parameters
+$search = $_GET['search'] ?? '';
 $styleFilter = $_GET['style_id'] ?? '';
 $statusFilter = $_GET['status'] ?? '';
 $pageSize = 20;
@@ -21,6 +22,13 @@ $offset = ($page - 1) * $pageSize;
 // Build WHERE clause
 $whereConditions = ["m.is_deleted = 0"];
 $params = [];
+
+if (!empty($search)) {
+    $whereConditions[] = "(s.style_code LIKE ? OR s.description LIKE ? OR m.description LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+}
 
 if (!empty($styleFilter)) {
     $whereConditions[] = "m.style_id = ?";
@@ -124,44 +132,99 @@ include '../includes/header.php';
             </div>
             <?php endif; ?>
 
-            <!-- Filters -->
+            <!-- Search and Filters -->
             <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
-                <form method="GET" class="flex flex-wrap gap-4 items-end">
-                    <div class="flex-1 min-w-48">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Style</label>
-                        <select name="style_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                            <option value="">All Styles</option>
-                            <?php foreach ($styles as $style): ?>
-                            <option value="<?php echo $style['style_id']; ?>" <?php echo $styleFilter == $style['style_id'] ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($style['style_code']); ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
+                <!-- Search Bar -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold text-gray-900">Search Method Analysis</h2>
+                        <?php if (!empty($search)): ?>
+                        <a href="method_list.php" class="text-sm text-gray-600 hover:text-gray-800">Clear Search</a>
+                        <?php endif; ?>
                     </div>
                     
-                    <div class="flex-1 min-w-32">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                        <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                            <option value="">All Status</option>
-                            <option value="DRAFT" <?php echo $statusFilter === 'DRAFT' ? 'selected' : ''; ?>>Draft</option>
-                            <option value="IN_PROGRESS" <?php echo $statusFilter === 'IN_PROGRESS' ? 'selected' : ''; ?>>In Progress</option>
-                            <option value="COMPLETED" <?php echo $statusFilter === 'COMPLETED' ? 'selected' : ''; ?>>Completed</option>
-                            <option value="APPROVED" <?php echo $statusFilter === 'APPROVED' ? 'selected' : ''; ?>>Approved</option>
-                        </select>
-                    </div>
-                    
-                    <div class="flex gap-2">
-                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
-                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <form method="GET" class="flex gap-4">
+                        <div class="flex-1">
+                            <input type="text" 
+                                   name="search" 
+                                   value="<?php echo htmlspecialchars($search); ?>" 
+                                   placeholder="Search by style code, style description, or method description..." 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        </div>
+                        <!-- Preserve filter values when searching -->
+                        <?php if (!empty($styleFilter)): ?>
+                        <input type="hidden" name="style_id" value="<?php echo htmlspecialchars($styleFilter); ?>">
+                        <?php endif; ?>
+                        <?php if (!empty($statusFilter)): ?>
+                        <input type="hidden" name="status" value="<?php echo htmlspecialchars($statusFilter); ?>">
+                        <?php endif; ?>
+                        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                            <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
-                            Filter
+                            Search
                         </button>
-                        <a href="method_list.php" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
-                            Clear
-                        </a>
+                    </form>
+                    
+                    <?php if ($totalRecords > 0): ?>
+                    <div class="mt-4 text-sm text-gray-600">
+                        Showing <?php echo $offset + 1; ?>-<?php echo min($offset + $pageSize, $totalRecords); ?> of <?php echo $totalRecords; ?> results
+                        <?php if (!empty($search)): ?>
+                        for "<span class="font-medium"><?php echo htmlspecialchars($search); ?></span>"
+                        <?php endif; ?>
                     </div>
-                </form>
+                    <?php elseif (!empty($search)): ?>
+                    <div class="mt-4 text-sm text-gray-600">
+                        No results found for "<span class="font-medium"><?php echo htmlspecialchars($search); ?></span>"
+                    </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Filters -->
+                <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-md font-medium text-gray-900 mb-4">Additional Filters</h3>
+                    <form method="GET" class="flex flex-wrap gap-4 items-end">
+                        <!-- Preserve search when filtering -->
+                        <?php if (!empty($search)): ?>
+                        <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
+                        <?php endif; ?>
+                        
+                        <div class="flex-1 min-w-48">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Style</label>
+                            <select name="style_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="">All Styles</option>
+                                <?php foreach ($styles as $style): ?>
+                                <option value="<?php echo $style['style_id']; ?>" <?php echo $styleFilter == $style['style_id'] ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($style['style_code']); ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="flex-1 min-w-32">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                            <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="">All Status</option>
+                                <option value="DRAFT" <?php echo $statusFilter === 'DRAFT' ? 'selected' : ''; ?>>Draft</option>
+                                <option value="IN_PROGRESS" <?php echo $statusFilter === 'IN_PROGRESS' ? 'selected' : ''; ?>>In Progress</option>
+                                <option value="COMPLETED" <?php echo $statusFilter === 'COMPLETED' ? 'selected' : ''; ?>>Completed</option>
+                                <option value="APPROVED" <?php echo $statusFilter === 'APPROVED' ? 'selected' : ''; ?>>Approved</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                Filter
+                            </button>
+                            <a href="method_list.php" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                                Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <!-- Method Analysis Cards -->

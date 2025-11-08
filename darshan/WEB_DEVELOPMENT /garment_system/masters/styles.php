@@ -95,34 +95,98 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'delete' && true) {
         $id = intval($_POST['id']);
         
-        // Check if style is used in other tables
-        $usageCheck = $db->queryOne("
-            SELECT COUNT(*) as count FROM (
-                SELECT style_id FROM ob WHERE style_id = ?
-                UNION ALL
-                SELECT style_id FROM tcr WHERE style_id = ?
-            ) as usage
-        ", [$id, $id]);
-        
-        if ($usageCheck && $usageCheck['count'] > 0) {
-            $message = 'Cannot delete style. It is being used in operation breakdowns or TCR records.';
+        // Get style info for logging before deletion
+        $oldData = $db->getById('styles', $id);
+        if (!$oldData) {
+            $message = 'Style not found.';
             $messageType = 'error';
         } else {
-            $oldData = $db->getById('styles', $id);
-            $result = $db->delete('styles', $id);
-            
-            if ($result) {
-                $message = 'Style deleted successfully.';
-                logActivity('styles', $id, 'DELETE', $oldData);
-            } else {
-                $message = 'Error deleting style.';
+            // Check dependent records and delete them in transaction
+            try {
+                $db->beginTransaction();
+                
+                // Count dependent records for user feedback
+                $obCount = $db->queryOne("SELECT COUNT(*) as count FROM ob WHERE style_id = ?", [$id]);
+                $tcrCount = $db->queryOne("SELECT COUNT(*) as count FROM tcr WHERE style_id = ?", [$id]);
+                
+                $obRecords = $obCount['count'] ?? 0;
+                $tcrRecords = $tcrCount['count'] ?? 0;
+                
+                // Delete dependent records first (cascade)
+                if ($obRecords > 0) {
+                    // Delete OB items first, then OB records
+                    $db->query("DELETE FROM ob_items WHERE ob_id IN (SELECT ob_id FROM ob WHERE style_id = ?)", [$id]);
+                    $db->query("DELETE FROM ob WHERE style_id = ?", [$id]);
+                }
+                
+                if ($tcrRecords > 0) {
+                    // Delete TCR items first, then TCR records
+                    $db->query("DELETE FROM tcr_items WHERE tcr_id IN (SELECT tcr_id FROM tcr WHERE style_id = ?)", [$id]);
+                    $db->query("DELETE FROM tcr WHERE style_id = ?", [$id]);
+                }
+                
+                // Now delete the style itself
+                $result = $db->hardDelete('styles', $id);
+                
+                if ($result) {
+                    $db->commit();
+                    
+                    // Create detailed success message
+                    $deletedItems = [];
+                    if ($obRecords > 0) $deletedItems[] = "{$obRecords} OB record(s)";
+                    if ($tcrRecords > 0) $deletedItems[] = "{$tcrRecords} TCR record(s)";
+                    
+                    $dependentMsg = !empty($deletedItems) ? ' and ' . implode(', ', $deletedItems) : '';
+                    $message = "Style '{$oldData['style_code']}' permanently deleted successfully{$dependentMsg}.";
+                    
+                    logActivity('styles', $id, 'DELETE', $oldData);
+                } else {
+                    $db->rollback();
+                    $dbErr = method_exists($db, 'getLastError') ? $db->getLastError() : '';
+                    if ($dbErr) {
+                        error_log("Style delete failed: {$dbErr}");
+                    }
+                    $message = 'Error deleting style.' . ($dbErr ? ' (DB: ' . htmlspecialchars($dbErr) . ')' : '');
+                    $messageType = 'error';
+                }
+                
+            } catch (Exception $e) {
+                $db->rollback();
+                error_log("Style cascade delete error: " . $e->getMessage());
+                $message = 'Error deleting style and dependent records: ' . htmlspecialchars($e->getMessage());
                 $messageType = 'error';
             }
         }
     }
 }
 
-// Get all styles with related data counts
+// Handle search and pagination
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$page = max(1, intval($_GET['page'] ?? 1));
+$perPage = 12; // Items per page
+$offset = ($page - 1) * $perPage;
+
+// Build search query
+$searchWhere = '';
+$searchParams = [];
+
+if (!empty($search)) {
+    $searchWhere = " WHERE (s.style_code LIKE ? OR s.description LIKE ? OR s.product LIKE ? OR s.fabric LIKE ?)";
+    $searchTerm = "%{$search}%";
+    $searchParams = [$searchTerm, $searchTerm, $searchTerm, $searchTerm];
+}
+
+// Get total count for pagination
+$totalQuery = "
+    SELECT COUNT(*) as total
+    FROM styles s 
+    {$searchWhere}
+";
+$totalResult = $db->queryOne($totalQuery, $searchParams);
+$totalItems = $totalResult['total'] ?? 0;
+$totalPages = ceil($totalItems / $perPage);
+
+// Get styles with pagination and search
 $styles = $db->query("
     SELECT s.*, 
            COUNT(DISTINCT ob.ob_id) as ob_count,
@@ -130,9 +194,11 @@ $styles = $db->query("
     FROM styles s 
     LEFT JOIN ob ON s.style_id = ob.style_id 
     LEFT JOIN tcr ON s.style_id = tcr.style_id 
+    {$searchWhere}
     GROUP BY s.style_id
     ORDER BY s.created_at DESC
-");
+    LIMIT {$perPage} OFFSET {$offset}
+", $searchParams);
 
 include '../includes/header.php';
 ?>
@@ -172,7 +238,108 @@ include '../includes/header.php';
             </div>
             <?php endif; ?>
 
-            <!-- Styles Cards Grid -->
+            <!-- Search and Filters -->
+            <div class="mb-6 bg-white rounded-lg shadow p-6">
+                <form method="GET" class="flex gap-4 items-end">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search Styles</label>
+                        <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Search by code, description, product, or fabric...">
+                    </div>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                    <?php if (!empty($search)): ?>
+                    <a href="?" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-times mr-2"></i>Clear
+                    </a>
+                    <?php endif; ?>
+                </form>
+            </div>
+
+            <!-- Results Summary -->
+            <div class="mb-4 flex justify-between items-center">
+                <div class="text-sm text-gray-600">
+                    <?php if (!empty($search)): ?>
+                    Showing <?php echo count($styles); ?> of <?php echo $totalItems; ?> results for "<?php echo htmlspecialchars($search); ?>"
+                    <?php else: ?>
+                    Showing <?php echo count($styles); ?> of <?php echo $totalItems; ?> styles
+                    <?php endif; ?>
+                    (Page <?php echo $page; ?> of <?php echo $totalPages; ?>)
+                </div>
+                
+                <!-- View Toggle -->
+                <div class="flex space-x-2">
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['view' => 'cards'])); ?>" 
+                       class="px-3 py-1 text-sm <?php echo ($_GET['view'] ?? 'cards') === 'cards' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'; ?> rounded">
+                        <i class="fas fa-th mr-1"></i>Cards
+                    </a>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['view' => 'list'])); ?>" 
+                       class="px-3 py-1 text-sm <?php echo ($_GET['view'] ?? 'cards') === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'; ?> rounded">
+                        <i class="fas fa-list mr-1"></i>List
+                    </a>
+                </div>
+            </div>
+
+            <?php $viewMode = $_GET['view'] ?? 'cards'; ?>
+            
+            <?php if ($viewMode === 'list'): ?>
+            <!-- List View -->
+            <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Style Code</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fabric</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <?php foreach ($styles as $style): ?>
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <?php echo htmlspecialchars($style['style_code']); ?>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                                <?php echo htmlspecialchars($style['description'] ?: 'No description'); ?>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <?php echo htmlspecialchars($style['product'] ?: '—'); ?>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <?php echo htmlspecialchars($style['fabric'] ?: '—'); ?>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full <?php echo $style['is_active'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?>">
+                                    <?php echo $style['is_active'] ? 'Active' : 'Inactive'; ?>
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                <a href="../ob/ob_list.php?style_id=<?php echo $style['style_id']; ?>" 
+                                   class="inline-flex items-center px-2 py-1 rounded text-xs font-medium text-blue-600 hover:text-blue-800 border border-blue-300 hover:bg-blue-50 transition-all">OB</a>
+                                <a href="../tcr/tcr_list.php?style_id=<?php echo $style['style_id']; ?>" 
+                                   class="inline-flex items-center px-2 py-1 rounded text-xs font-medium text-purple-600 hover:text-purple-800 border border-purple-300 hover:bg-purple-50 transition-all">TCR</a>
+                                <?php if (true): ?>
+                                <button onclick="openEditModal(<?php echo htmlspecialchars(json_encode($style)); ?>)" 
+                                        class="text-green-600 hover:text-green-800">Edit</button>
+                                <?php endif; ?>
+                                <?php if (true): ?>
+                                <button onclick="confirmDelete(<?php echo $style['style_id']; ?>, '<?php echo htmlspecialchars($style['style_code'], ENT_QUOTES); ?>')" 
+                                        class="text-red-600 hover:text-red-800">Delete</button>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php else: ?>
+            <!-- Cards View -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <?php foreach ($styles as $style): ?>
                 <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
@@ -213,38 +380,21 @@ include '../includes/header.php';
                     
                     <!-- Card Footer -->
                     <div class="px-6 py-4 bg-gray-50 rounded-b-lg">
-                        <div class="flex justify-between items-center">
-                            <div class="flex space-x-4 text-sm text-gray-600">
-                                <span class="flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                    </svg>
-                                    <?php echo $style['ob_count']; ?> OB
-                                </span>
-                                <span class="flex items-center">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                                    </svg>
-                                    <?php echo $style['tcr_count']; ?> TCR
-                                </span>
-                            </div>
-                            
-                            <div class="flex space-x-2">
-                                <a href="../ob/ob_list.php?style_id=<?php echo $style['style_id']; ?>" 
-                                   class="text-blue-600 hover:text-blue-800 text-sm font-medium">OB</a>
-                                <a href="../tcr/tcr_list.php?style_id=<?php echo $style['style_id']; ?>" 
-                                   class="text-purple-600 hover:text-purple-800 text-sm font-medium">TCR</a>
-                                <?php if (true): ?>
-                                <button onclick="openEditModal(<?php echo htmlspecialchars(json_encode($style)); ?>)" 
-                                        class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 border-2 border-green-300 hover:border-green-400 transition-all mr-2">
-                                        <i class="fas fa-edit mr-1"></i>Edit</button>
-                                <?php endif; ?>
-                                <?php if (true): ?>
-                                <button onclick="confirmDelete(<?php echo $style['style_id']; ?>, '<?php echo htmlspecialchars($style['style_code'], ENT_QUOTES); ?>')" 
-                                        class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 border-2 border-red-300 hover:border-red-400 transition-all">
-                                        <i class="fas fa-trash mr-1"></i>Delete</button>
-                                <?php endif; ?>
-                            </div>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <a href="../ob/ob_list.php?style_id=<?php echo $style['style_id']; ?>" 
+                               class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium text-blue-600 hover:text-blue-800 border border-blue-300 hover:bg-blue-50 transition-all">OB</a>
+                            <a href="../tcr/tcr_list.php?style_id=<?php echo $style['style_id']; ?>" 
+                               class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium text-purple-600 hover:text-purple-800 border border-purple-300 hover:bg-purple-50 transition-all">TCR</a>
+                            <?php if (true): ?>
+                            <button onclick="openEditModal(<?php echo htmlspecialchars(json_encode($style)); ?>)" 
+                                    class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 border-2 border-green-300 hover:border-green-400 transition-all">
+                                    <i class="fas fa-edit mr-1"></i>Edit</button>
+                            <?php endif; ?>
+                            <?php if (true): ?>
+                            <button onclick="confirmDelete(<?php echo $style['style_id']; ?>, '<?php echo htmlspecialchars($style['style_code'], ENT_QUOTES); ?>')" 
+                                    class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200 border-2 border-red-300 hover:border-red-400 transition-all">
+                                    <i class="fas fa-trash mr-1"></i>Delete</button>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -273,6 +423,59 @@ include '../includes/header.php';
                 </div>
                 <?php endif; ?>
             </div>
+            <?php endif; ?>
+
+            <!-- Pagination -->
+            <?php if ($totalPages > 1): ?>
+            <div class="mt-8 flex justify-center">
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <?php if ($page > 1): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Previous</span>
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php
+                    $startPage = max(1, $page - 2);
+                    $endPage = min($totalPages, $page + 2);
+                    
+                    if ($startPage > 1): ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => 1])); ?>" 
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
+                        <?php if ($startPage > 2): ?>
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    
+                    <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>" 
+                       class="relative inline-flex items-center px-4 py-2 border <?php echo $i === $page ? 'bg-blue-50 border-blue-500 text-blue-600' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'; ?> text-sm font-medium"><?php echo $i; ?></a>
+                    <?php endfor; ?>
+                    
+                    <?php if ($endPage < $totalPages): ?>
+                        <?php if ($endPage < $totalPages - 1): ?>
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                        <?php endif; ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $totalPages])); ?>" 
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"><?php echo $totalPages; ?></a>
+                    <?php endif; ?>
+                    
+                    <?php if ($page < $totalPages): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Next</span>
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </a>
+                    <?php endif; ?>
+                </nav>
+            </div>
+            <?php endif; ?>
 
         </div>
     </div>
@@ -456,10 +659,20 @@ include '../includes/header.php';
                 </svg>
             </div>
             <h3 class="text-lg font-medium text-gray-900 mt-4">Delete Style</h3>
-            <p class="mt-2 px-7 py-3 text-sm text-gray-500">
-                Are you sure you want to delete style "<span id="deleteStyleName" class="font-medium"></span>"?
-                This action cannot be undone.
-            </p>
+            <div class="mt-2 px-7 py-3 text-sm text-gray-500">
+                <p class="mb-2">
+                    Are you sure you want to delete style "<span id="deleteStyleName" class="font-medium"></span>"?
+                </p>
+                <div class="bg-yellow-50 border border-yellow-200 rounded p-2 mb-2">
+                    <p class="text-yellow-800 text-xs">
+                        <i class="fas fa-warning mr-1"></i>
+                        <strong>Warning:</strong> This will also permanently delete all associated Operation Breakdowns (OB) and Thread Consumption Records (TCR) for this style.
+                    </p>
+                </div>
+                <p class="text-red-600 text-xs font-medium">
+                    This action cannot be undone.
+                </p>
+            </div>
             <form id="deleteForm" method="POST" class="mt-4">
                 <input type="hidden" name="action" value="delete">
                 <input type="hidden" name="id" id="deleteStyleId">

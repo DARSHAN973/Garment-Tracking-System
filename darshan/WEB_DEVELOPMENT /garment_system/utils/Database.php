@@ -6,6 +6,7 @@
 
 class DatabaseHelper {
     private $conn;
+    private $lastError = '';
     
     public function __construct() {
         require_once __DIR__ . '/../config/database.php';
@@ -150,6 +151,37 @@ class DatabaseHelper {
             error_log("Database delete error: " . $e->getMessage());
             return false;
         }
+    }
+    
+    /**
+     * Permanently delete record from database
+     */
+    public function hardDelete($table, $id, $idColumn = null) {
+        try {
+            if (!$idColumn) {
+                $idColumn = substr($table, -1) === 's' ? substr($table, 0, -1) . '_id' : $table . '_id';
+            }
+            $stmt = $this->conn->prepare("DELETE FROM {$table} WHERE {$idColumn} = ?");
+            $success = $stmt->execute([$id]);
+            if (!$success) {
+                $err = $stmt->errorInfo();
+                $this->lastError = isset($err[2]) ? $err[2] : json_encode($err);
+            } else {
+                $this->lastError = '';
+            }
+            return $success;
+        } catch (Exception $e) {
+            error_log("Database hard delete error: " . $e->getMessage());
+            $this->lastError = $e->getMessage();
+            return false;
+        }
+    }
+
+    /**
+     * Return last error message from DB operations (if any)
+     */
+    public function getLastError() {
+        return $this->lastError;
     }
     
     /**

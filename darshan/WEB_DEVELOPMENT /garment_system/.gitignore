@@ -1,0 +1,4 @@
+node_modules/
+tailwindcss
+npm-debug.log*
+.npm

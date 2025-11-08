@@ -123,10 +123,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $messageType = 'error';
         } else {
             $oldData = $db->getById('thread_factors', $id);
-            $result = $db->delete('thread_factors', $id);
+            $result = $db->hardDelete('thread_factors', $id);
             
             if ($result) {
-                $message = 'Thread factor deleted successfully.';
+                $message = 'Thread factor permanently deleted successfully.';
                 logActivity('thread_factors', $id, 'DELETE', $oldData);
             } else {
                 $message = 'Error deleting thread factor.';
@@ -136,13 +136,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get all thread factors with machine names
+// Handle search and pagination
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$page = max(1, intval($_GET['page'] ?? 1));
+$perPage = 20; // Items per page
+$offset = ($page - 1) * $perPage;
+
+// Build search query
+$searchWhere = '';
+$searchParams = [];
+
+if (!empty($search)) {
+    $searchWhere = " WHERE (mt.name LIKE ? OR mt.code LIKE ? OR tf.factor_per_cm LIKE ?)";
+    $searchTerm = "%{$search}%";
+    $searchParams = [$searchTerm, $searchTerm, $searchTerm];
+}
+
+// Get total count for pagination
+$totalQuery = "
+    SELECT COUNT(*) as total
+    FROM thread_factors tf 
+    JOIN machine_types mt ON tf.machine_type_id = mt.machine_type_id 
+    {$searchWhere}
+";
+$totalResult = $db->queryOne($totalQuery, $searchParams);
+$totalItems = $totalResult['total'] ?? 0;
+$totalPages = ceil($totalItems / $perPage);
+
+// Get thread factors with machine names and pagination
 $threadFactors = $db->query("
     SELECT tf.*, mt.name as machine_name, mt.code as machine_code
     FROM thread_factors tf 
     JOIN machine_types mt ON tf.machine_type_id = mt.machine_type_id 
+    {$searchWhere}
     ORDER BY mt.name ASC
-");
+    LIMIT {$perPage} OFFSET {$offset}
+", $searchParams);
 
 include '../includes/header.php';
 ?>
@@ -182,6 +211,37 @@ include '../includes/header.php';
                 </div>
             </div>
             <?php endif; ?>
+
+            <!-- Search and Filters -->
+            <div class="mb-6 bg-white rounded-lg shadow p-6">
+                <form method="GET" class="flex gap-4 items-end">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search Thread Factors</label>
+                        <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Search by machine type, code, or factor value...">
+                    </div>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                    <?php if (!empty($search)): ?>
+                    <a href="?" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-times mr-2"></i>Clear
+                    </a>
+                    <?php endif; ?>
+                </form>
+            </div>
+
+            <!-- Results Summary -->
+            <div class="mb-4 text-sm text-gray-600">
+                <?php if (!empty($search)): ?>
+                Showing <?php echo count($threadFactors); ?> of <?php echo $totalItems; ?> results for "<?php echo htmlspecialchars($search); ?>"
+                <?php else: ?>
+                Showing <?php echo count($threadFactors); ?> of <?php echo $totalItems; ?> thread factors
+                <?php endif; ?>
+                (Page <?php echo $page; ?> of <?php echo $totalPages; ?>)
+            </div>
 
             <!-- Thread Factors Table -->
             <div class="bg-white rounded-lg shadow-md">
@@ -254,6 +314,58 @@ include '../includes/header.php';
                     </table>
                 </div>
             </div>
+
+            <!-- Pagination -->
+            <?php if ($totalPages > 1): ?>
+            <div class="mt-8 flex justify-center">
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <?php if ($page > 1): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Previous</span>
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php
+                    $startPage = max(1, $page - 2);
+                    $endPage = min($totalPages, $page + 2);
+                    
+                    if ($startPage > 1): ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => 1])); ?>" 
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">1</a>
+                        <?php if ($startPage > 2): ?>
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    
+                    <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>" 
+                       class="relative inline-flex items-center px-4 py-2 border <?php echo $i === $page ? 'bg-blue-50 border-blue-500 text-blue-600' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'; ?> text-sm font-medium"><?php echo $i; ?></a>
+                    <?php endfor; ?>
+                    
+                    <?php if ($endPage < $totalPages): ?>
+                        <?php if ($endPage < $totalPages - 1): ?>
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                        <?php endif; ?>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $totalPages])); ?>" 
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"><?php echo $totalPages; ?></a>
+                    <?php endif; ?>
+                    
+                    <?php if ($page < $totalPages): ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>" 
+                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Next</span>
+                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </a>
+                    <?php endif; ?>
+                </nav>
+            </div>
+            <?php endif; ?>
 
         </div>
     </div>
@@ -506,6 +618,65 @@ function confirmDelete(factorId, factorName) {
 function closeDeleteModal() {
     document.getElementById('deleteModal').classList.add('hidden');
 }
+
+// Enhanced form submissions with loading
+document.addEventListener('DOMContentLoaded', function() {
+    // Search form loading
+    const searchForm = document.querySelector('form[method="GET"]');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function() {
+            if (window.loadingManager) {
+                window.loadingManager.searchLoading(this, true);
+                showLoading('Searching...', 'Finding thread factors matching your criteria');
+            }
+        });
+    }
+
+    // Create form loading
+    const createForm = document.getElementById('createForm');
+    if (createForm) {
+        createForm.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn && window.loadingManager) {
+                window.loadingManager.buttonLoading(submitBtn, true);
+                showLoading('Creating Thread Factor...', 'Adding new thread factor to the system');
+            }
+        });
+    }
+
+    // Edit form loading
+    const editForm = document.getElementById('editForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn && window.loadingManager) {
+                window.loadingManager.buttonLoading(submitBtn, true);
+                showLoading('Updating Thread Factor...', 'Saving your changes');
+            }
+        });
+    }
+
+    // Delete form loading
+    const deleteForm = document.getElementById('deleteForm');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn && window.loadingManager) {
+                window.loadingManager.buttonLoading(submitBtn, true);
+                showLoading('Deleting Thread Factor...', 'Removing thread factor from the system');
+            }
+        });
+    }
+
+    // Pagination loading
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('nav[aria-label="Pagination"] a')) {
+            if (window.loadingManager) {
+                showLoading('Loading Page...', 'Fetching thread factors data');
+            }
+        }
+    });
+});
 
 // Close modals on outside click
 document.addEventListener('click', function(event) {

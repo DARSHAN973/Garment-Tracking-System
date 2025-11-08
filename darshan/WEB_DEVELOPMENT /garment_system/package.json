@@ -1,0 +1,18 @@
+{
+  "name": "garment_system",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build-css": "./tailwindcss -i src/input.css -o assets/css/tailwind.css --minify",
+    "watch-css": "./tailwindcss -i src/input.css -o assets/css/tailwind.css --watch",
+    "update-browserslist": "npx update-browserslist-db@latest",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^4.1.17"
+  }
+}
