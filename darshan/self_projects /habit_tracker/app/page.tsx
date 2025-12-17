@@ -20,7 +20,7 @@ export default async function HomePage() {
         await fetch("http://localhost:3000/api/auth/logout", {
           method: "POST",
         });
-        redirect("/login");
+        redirect("/auth");
       }}
     >
       <button className="text-sm text-red-600">

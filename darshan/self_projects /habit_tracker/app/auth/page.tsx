@@ -48,7 +48,7 @@ export default function AuthPage() {
         return;
       }
 
-      window.location.href = isLogin ? "/" : "/login";
+      window.location.href = isLogin ? "/" : "/auth";
     } catch {
       setError("Something went wrong");
     } finally {
@@ -57,12 +57,12 @@ export default function AuthPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4">
+    <main className="min-h-screen flex items-center justify-center p-4 ">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-4 bg-white p-6 rounded-lg shadow"
+        className="w-full max-w-sm space-y-4 bg-white p-6 rounded-lg shadow text-black"
       >
-        <h1 className="text-xl font-semibold text-center">
+        <h1 className="text-xl font-semibold text-center text-dark">
           {isLogin ? "Login" : "Create Account"}
         </h1>
 
