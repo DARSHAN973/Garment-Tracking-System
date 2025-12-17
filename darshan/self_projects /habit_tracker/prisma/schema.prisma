@@ -14,6 +14,7 @@ model User {
   password  String
   habits    Habit[]
   entries   HabitEntry[]
+  sessions Session[]
   createdAt DateTime     @default(now())
 }
 
@@ -41,6 +42,15 @@ model HabitEntry {
   createdAt DateTime     @default(now())
 
   @@unique([habitId, date])
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())        
 }
 
 enum HabitType {
