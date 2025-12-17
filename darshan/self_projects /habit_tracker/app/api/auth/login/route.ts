@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { verifyPassword } from "@/app/lib/auth";
+import { cookies } from "next/headers";
+import { createSession } from "@/app/lib/session";
+
 
 export async function POST(req: Request) {
   try {
@@ -35,9 +38,19 @@ export async function POST(req: Request) {
     }
 
     // 🔜 Session creation will come here next
+    const {token, expiresAt} = await createSession(user.id);
+
+    (await cookies()).set("session" , token , {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      expires: expiresAt,
+      path: "/",
+    });
+
     return NextResponse.json(
-      { message: "Login successful" },
-      { status: 200 }
+      {message:"login succesfully"},
+      {status: 200}
     );
   } catch {
     return NextResponse.json(
