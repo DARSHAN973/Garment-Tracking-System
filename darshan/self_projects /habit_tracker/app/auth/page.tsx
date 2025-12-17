@@ -2,13 +2,17 @@
 
 import { useState, useEffect } from "react";
 
-export default function SignupPage() {
+export default function AuthPage() {
+  const [isLogin, setIsLogin] = useState(true);
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // redirect if already logged in
   useEffect(() => {
     fetch("/api/test/me").then((res) => {
       if (res.ok) {
@@ -17,29 +21,34 @@ export default function SignupPage() {
     });
   }, []);
 
-  async function handleSignup(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
+    const url = isLogin ? "/api/auth/login" : "/api/auth/signup";
+
+    const body = isLogin
+      ? { email, password }
+      : { name, email, password };
+
     try {
-      const res = await fetch("/api/auth/signup", {
+      const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.message || "Signup failed");
+        setError(data.message || "Something went wrong");
         setLoading(false);
         return;
       }
 
-      // signup success → go to login
-      window.location.href = "/login";
+      window.location.href = isLogin ? "/" : "/login";
     } catch {
       setError("Something went wrong");
     } finally {
@@ -50,25 +59,29 @@ export default function SignupPage() {
   return (
     <main className="min-h-screen flex items-center justify-center p-4">
       <form
-        onSubmit={handleSignup}
+        onSubmit={handleSubmit}
         className="w-full max-w-sm space-y-4 bg-white p-6 rounded-lg shadow"
       >
-        <h1 className="text-xl font-semibold text-center">Create Account</h1>
+        <h1 className="text-xl font-semibold text-center">
+          {isLogin ? "Login" : "Create Account"}
+        </h1>
 
         {error && (
           <p className="text-sm text-red-600 text-center">{error}</p>
         )}
 
-        <div>
-          <label className="text-sm">Name</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            className="w-full border rounded px-3 py-2 mt-1"
-          />
-        </div>
+        {!isLogin && (
+          <div>
+            <label className="text-sm">Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full border rounded px-3 py-2 mt-1"
+            />
+          </div>
+        )}
 
         <div>
           <label className="text-sm">Email</label>
@@ -97,14 +110,24 @@ export default function SignupPage() {
           disabled={loading}
           className="w-full bg-black text-white py-2 rounded disabled:opacity-50"
         >
-          {loading ? "Creating account..." : "Sign up"}
+          {loading
+            ? isLogin
+              ? "Logging in..."
+              : "Creating account..."
+            : isLogin
+            ? "Login"
+            : "Sign up"}
         </button>
 
         <p className="text-sm text-center">
-          Already have an account?{" "}
-          <a href="/login" className="underline">
-            Login
-          </a>
+          {isLogin ? "New here?" : "Already have an account?"}{" "}
+          <button
+            type="button"
+            onClick={() => setIsLogin(!isLogin)}
+            className="underline"
+          >
+            {isLogin ? "Create account" : "Login"}
+          </button>
         </p>
       </form>
     </main>
