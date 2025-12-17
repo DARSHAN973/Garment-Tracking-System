@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/app/lib/getCurrentUser";
 import { redirect } from "next/navigation";
 
+
 export default async function HomePage() {
   const user = await getCurrentUser();
 
@@ -10,27 +11,29 @@ export default async function HomePage() {
 
   return (
   <main className="p-4 space-y-4">
-    <header>
-      <h1 className="text-xl font-semibold">
-        Today
-      </h1>
-      <p className="text-sm text-gray-500">
-        {new Date().toDateString()}
-      </p>
-    </header>
+  <header className="flex justify-between items-center">
+    <h1 className="text-xl font-semibold">Today</h1>
 
-    <section className="space-y-3">
-      <div className="p-4 border rounded-lg flex justify-between items-center">
-        <span>Morning Run</span>
-        <input type="checkbox" />
-      </div>
+    <form
+      action={async () => {
+        "use server";
+        await fetch("http://localhost:3000/api/auth/logout", {
+          method: "POST",
+        });
+        redirect("/login");
+      }}
+    >
+      <button className="text-sm text-red-600">
+        Logout
+      </button>
+    </form>
+  </header>
 
-      <div className="p-4 border rounded-lg flex justify-between items-center">
-        <span>Read 10 pages</span>
-        <input type="checkbox" />
-      </div>
-    </section>
-  </main>
+  <p className="text-sm text-gray-500">
+    {new Date().toDateString()}
+  </p>
+</main>
+
 );
 
 }
