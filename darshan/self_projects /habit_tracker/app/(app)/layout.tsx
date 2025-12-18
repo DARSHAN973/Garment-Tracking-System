@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  Home,
+  CheckCircle,
+  ListTodo,
+  User,
+} from "lucide-react";
 
 export default function AppLayout({
   children,
@@ -12,30 +18,35 @@ export default function AppLayout({
 
   const linkClass = (path: string) =>
     pathname === path
-      ? "text-black font-semibold"
-      : "text-black opacity-60";
+      ? "flex flex-col items-center text-black font-semibold"
+      : "flex flex-col items-center text-black opacity-60";
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
-      {/* Main content */}
-      <main className="flex-1 p-4 pb-20">
+      <main className="flex-1 p-4 pb-24">
         {children}
       </main>
 
-      {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 border-t bg-white">
-        <div className="max-w-md mx-auto flex justify-around py-3">
+        <div className="max-w-md mx-auto flex justify-around py-2">
           <Link href="/" className={linkClass("/")}>
-            Dashboard
+            <Home size={20} />
+            <span className="text-xs mt-1">Dashboard</span>
           </Link>
+
           <Link href="/today" className={linkClass("/today")}>
-            Today
+            <CheckCircle size={20} />
+            <span className="text-xs mt-1">Today</span>
           </Link>
+
           <Link href="/habits" className={linkClass("/habits")}>
-            Habits
+            <ListTodo size={20} />
+            <span className="text-xs mt-1">Habits</span>
           </Link>
+
           <Link href="/profile" className={linkClass("/profile")}>
-            Profile
+            <User size={20} />
+            <span className="text-xs mt-1">Profile</span>
           </Link>
         </div>
       </nav>
